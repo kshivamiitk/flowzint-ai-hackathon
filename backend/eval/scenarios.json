@@ -1,0 +1,42 @@
+[
+  {
+    "message": "Bhai payment deduct ho gaya but order confirm nahi hua.",
+    "expected_intent": "failed_payment",
+    "expected_severity": "medium"
+  },
+  {
+    "message": "UPI charged me but no order was created.",
+    "expected_intent": "failed_payment",
+    "expected_severity": "medium"
+  },
+  {
+    "message": "Please refund my money.",
+    "expected_intent": "refund_request",
+    "expected_severity": "medium"
+  },
+  {
+    "message": "My parcel delivery is late.",
+    "expected_intent": "delivery_issue",
+    "expected_severity": "low"
+  },
+  {
+    "message": "I cannot login to my account.",
+    "expected_intent": "account_issue",
+    "expected_severity": "low"
+  },
+  {
+    "message": "How does your refund policy work?",
+    "expected_intent": "refund_request",
+    "expected_severity": "medium"
+  },
+  {
+    "message": "Urgent: payment was charged and the order failed.",
+    "expected_intent": "failed_payment",
+    "expected_severity": "high"
+  },
+  {
+    "message": "I think this transaction is fraud.",
+    "expected_intent": "other",
+    "expected_severity": "critical"
+  }
+]
