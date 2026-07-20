@@ -80,7 +80,6 @@ mapping.
 Requirements: Docker Desktop or Docker Engine with Docker Compose.
 
 ```bash
-cp .env.example .env
 docker compose up --build
 ```
 
@@ -92,6 +91,14 @@ Open:
 
 The Docker setup uses PostgreSQL. The first API startup creates the schema and
 seeds demonstration data.
+
+The repository includes a safe `.env` that runs in free local AI mode. Docker
+publishes PostgreSQL on host port `5433` by default to avoid conflicts with an
+existing local Postgres on `5432`. To choose another host port:
+
+```bash
+POSTGRES_HOST_PORT=55432 docker compose up --build
+```
 
 ## Quick start without Docker
 
@@ -218,11 +225,19 @@ Hosted chatbot failures, invalid structured responses, and free-tier rate
 limits fall back to the deterministic local analyzer and answer generator. The
 demo therefore remains usable without a paid or continuously available API.
 
+Keep personal hosted-provider keys in `.env.local`, which is ignored by Git and
+loaded after `.env` for local backend runs. For Docker with private overrides:
+
+```bash
+docker compose --env-file .env.local up --build
+```
+
 ## Configuration
 
 | Variable | Default | Purpose |
 |---|---:|---|
 | `DATABASE_URL` | SQLite URL | Async SQLAlchemy connection |
+| `POSTGRES_HOST_PORT` | `5433` | Host port for Docker PostgreSQL |
 | `CORS_ORIGINS` | Localhost and 127.0.0.1 | Allowed frontend origins |
 | `AI_PROVIDER` | `local` | `local` or `openai_compatible` |
 | `CHATBOT_API_BASE_URL` | OpenAI URL | OpenAI-compatible `/v1` base URL |

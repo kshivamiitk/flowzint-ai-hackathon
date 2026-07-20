@@ -90,7 +90,9 @@ PulseResolve provides one governed workflow:
 
 - All customers and transactions are synthetic.
 - `MockRefundGateway` simulates payment movement; no real refund is sent.
-- API keys remain in an ignored local `.env` file and are never committed.
+- The committed `.env` contains no API key and runs in free local AI mode.
+- API keys remain in ignored local override files such as `.env.local` or in
+  deployment secrets.
 - The application works without any paid API using `AI_PROVIDER=local`.
 
 ## Submission Fields

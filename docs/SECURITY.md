@@ -11,7 +11,9 @@
 - Remote responses are mapped into typed domain values.
 - Invalid or unavailable hosted chatbot responses fall back to local,
   deterministic components.
-- Environment variables hold provider credentials.
+- The committed `.env` contains only non-secret local defaults.
+- Private provider credentials belong in ignored local override files such as
+  `.env.local` or in a deployment secrets manager.
 - CORS origins are configurable.
 - Every classification, approval, rejection, refund, and incident creates an
   audit event.
