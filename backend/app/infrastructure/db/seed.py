@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.domain.entities import (
@@ -13,7 +13,15 @@ from app.domain.entities import (
 )
 from app.domain.enums import Intent, Severity, TransactionStatus
 from app.domain.ports import EmbeddingProvider
-from app.infrastructure.db.models import CustomerModel
+from app.infrastructure.db.models import (
+    ActionModel,
+    AuditEventModel,
+    ConversationModel,
+    CustomerModel,
+    IncidentModel,
+    PolicyModel,
+    TransactionModel,
+)
 from app.infrastructure.db.uow import SqlAlchemyUnitOfWork
 
 CUSTOMERS = [
@@ -182,3 +190,24 @@ async def seed_database(
                 )
             )
         await uow.commit()
+
+
+async def reset_demo_database(
+    session_factory: async_sessionmaker[AsyncSession],
+    embedding_provider: EmbeddingProvider,
+) -> None:
+    """Restore the synthetic demo dataset without touching schema or configuration."""
+
+    async with session_factory.begin() as session:
+        for model in (
+            AuditEventModel,
+            ActionModel,
+            ConversationModel,
+            IncidentModel,
+            PolicyModel,
+            TransactionModel,
+            CustomerModel,
+        ):
+            await session.execute(delete(model))
+
+    await seed_database(session_factory, embedding_provider)

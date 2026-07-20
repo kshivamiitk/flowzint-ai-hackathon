@@ -3,9 +3,11 @@ import type { ReactNode } from "react";
 export function PageHeader({
   title,
   subtitle,
+  actions,
 }: {
   title: string;
   subtitle: string;
+  actions?: ReactNode;
 }) {
   return (
     <header className="page-header">
@@ -14,6 +16,9 @@ export function PageHeader({
         <h2>{title}</h2>
         <p className="muted">{subtitle}</p>
       </div>
+      {actions ? (
+        <div className="page-header-actions">{actions}</div>
+      ) : null}
     </header>
   );
 }
@@ -70,4 +75,12 @@ export function ErrorBanner({
   message: string;
 }) {
   return <div className="error-banner">{message}</div>;
+}
+
+export function SuccessBanner({
+  message,
+}: {
+  message: string;
+}) {
+  return <div className="success-banner">{message}</div>;
 }

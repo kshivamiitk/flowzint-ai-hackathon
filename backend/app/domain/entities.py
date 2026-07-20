@@ -109,6 +109,32 @@ class Incident:
         self.confidence = max(self.confidence, confidence)
         self.updated_at = utc_now()
 
+    def move_to(self, status: IncidentStatus) -> None:
+        allowed = {
+            IncidentStatus.DETECTED: {
+                IncidentStatus.INVESTIGATING,
+                IncidentStatus.CONFIRMED,
+                IncidentStatus.RESOLVED,
+            },
+            IncidentStatus.INVESTIGATING: {
+                IncidentStatus.CONFIRMED,
+                IncidentStatus.RESOLVING,
+                IncidentStatus.RESOLVED,
+            },
+            IncidentStatus.CONFIRMED: {
+                IncidentStatus.RESOLVING,
+                IncidentStatus.RESOLVED,
+            },
+            IncidentStatus.RESOLVING: {IncidentStatus.RESOLVED},
+            IncidentStatus.RESOLVED: set(),
+        }
+        if status == self.status:
+            return
+        if status not in allowed[self.status]:
+            raise ValueError(f"Incident cannot move from {self.status} to {status}")
+        self.status = status
+        self.updated_at = utc_now()
+
 
 @dataclass(slots=True)
 class ActionDecision:

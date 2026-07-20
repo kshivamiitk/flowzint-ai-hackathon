@@ -19,13 +19,14 @@ services:
     build: ./backend
     environment:
       APP_ENV: development
+      DEMO_MODE: ${DEMO_MODE:-true}
       DATABASE_URL: postgresql+asyncpg://pulse:pulse@db:5432/pulseresolve
-      CORS_ORIGINS: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       AI_PROVIDER: ${AI_PROVIDER:-local}
-      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
-      LLM_API_KEY: ${LLM_API_KEY:-}
-      LLM_MODEL: ${LLM_MODEL:-gpt-4.1-mini}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      CHATBOT_API_BASE_URL: ${CHATBOT_API_BASE_URL:-https://api.openai.com/v1}
+      CHATBOT_API_KEY: ${CHATBOT_API_KEY:-}
+      CHATBOT_MODEL: ${CHATBOT_MODEL:-gpt-4.1-mini}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-local}
     ports:
       - "8000:8000"
     depends_on:

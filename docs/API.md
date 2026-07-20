@@ -35,6 +35,8 @@ Content-Type: application/json
 The response includes:
 
 - classification and confidence;
+- explicit decision mode and risk level;
+- a six-stage explainability trace;
 - policy references;
 - generated customer response;
 - proposed/completed action;
@@ -49,6 +51,33 @@ GET /api/v1/actions
 GET /api/v1/actions?status=awaiting_approval
 GET /api/v1/audit-events?limit=100
 ```
+
+## Reset synthetic demo
+
+Available only when `DEMO_MODE=true`:
+
+```http
+POST /api/v1/demo/reset
+```
+
+This deletes only synthetic conversations, actions, incidents, policies,
+transactions, and customers before restoring the original demonstration data.
+
+## Update incident status
+
+```http
+POST /api/v1/incidents/{incident_id}/status
+Content-Type: application/json
+```
+
+```json
+{
+  "status": "investigating"
+}
+```
+
+Valid transitions are enforced by the incident domain entity and invalid moves
+return HTTP `409`.
 
 ## Approve action
 

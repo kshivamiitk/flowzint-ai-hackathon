@@ -15,6 +15,13 @@ class PolicyReferenceDTO(BaseModel):
     section: str
 
 
+class ResolutionTraceStepDTO(BaseModel):
+    id: str
+    label: str
+    status: str
+    detail: str
+
+
 class ActionDTO(BaseModel):
     id: str
     action_type: ActionType
@@ -49,6 +56,9 @@ class ChatResponse(BaseModel):
     severity: Severity
     language: str
     confidence: float
+    decision_mode: str
+    risk_level: str
+    resolution_trace: list[ResolutionTraceStepDTO]
     policy_references: list[PolicyReferenceDTO]
     action: ActionDTO | None = None
     incident: IncidentDTO | None = None
@@ -79,6 +89,10 @@ class ReviewRequest(BaseModel):
     comment: str | None = Field(default=None, max_length=500)
 
 
+class IncidentStatusRequest(BaseModel):
+    status: IncidentStatus
+
+
 class AuditEventDTO(BaseModel):
     id: str
     event_type: str
@@ -96,3 +110,10 @@ class DashboardMetricsDTO(BaseModel):
     pending_approvals: int
     completed_actions: int
     automation_rate: float
+
+
+class DemoResetDTO(BaseModel):
+    status: str
+    message: str
+    customers: int
+    scenarios: int

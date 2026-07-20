@@ -40,6 +40,7 @@ Contains use cases:
 - `IncidentDetectionService`
 - `QueryService`
 - `RefundPolicyEngine`
+- `DemoResetService`
 
 These classes depend on domain protocols and receive concrete implementations
 through constructor injection.
@@ -54,6 +55,7 @@ Implements external details:
 - SQLAlchemy Unit of Work
 - local deterministic AI adapters
 - OpenAI-compatible HTTP adapter
+- local fallback wrappers for hosted analyzer and answer generation
 - mock refund gateway
 - seed data
 
@@ -157,14 +159,16 @@ existing action before this point.
 
 ### Incident
 
-The current MVP creates incidents as `DETECTED` and supports the enum states:
+Incident transitions are enforced by the domain entity:
 
 ```text
-DETECTED -> INVESTIGATING -> CONFIRMED -> RESOLVING -> RESOLVED
+DETECTED
+  ├── INVESTIGATING -> CONFIRMED -> RESOLVING -> RESOLVED
+  ├── CONFIRMED -> RESOLVING -> RESOLVED
+  └── RESOLVED
 ```
 
-Further transition methods can be added to the domain entity without changing
-persistence contracts.
+Each API-driven status change creates an audit event.
 
 ## 6. Chat sequence
 
@@ -175,6 +179,7 @@ Customer
   v
 ChatOrchestrator
   |-- ComplaintAnalyzer.analyze()
+  |     └-- hosted failure -> local deterministic fallback
   |-- EmbeddingProvider.embed()
   |-- UnitOfWork
   |     |-- load customer
@@ -192,7 +197,7 @@ ChatOrchestrator
   |-- save grounded response
   |-- IncidentDetectionService.detect()
   |     |-- recent-conversation lookup
-  |     |-- cosine similarity
+  |     |-- cosine similarity OR shared verified error signal
   |     |-- create/update incident
   |     |-- attach conversations and save audit event
   v
@@ -259,8 +264,8 @@ For each new conversation:
 
 1. load conversations in the configured time window;
 2. keep conversations with the same intent;
-3. calculate cosine similarity;
-4. retain results above the threshold;
+3. compare semantic similarity and verified operational error signals;
+4. retain results above the threshold or sharing an error code;
 5. require the minimum complaint count;
 6. group by a stable intent fingerprint;
 7. aggregate error codes, app versions, and payment methods;
@@ -281,9 +286,11 @@ behind the same service boundary.
 | `ActionWorkflowService` | Action state, approval, execution, audit |
 | `IncidentDetectionService` | Complaint correlation and incident lifecycle |
 | `QueryService` | Read-oriented dashboard data |
+| `DemoResetService` | Controlled restoration of synthetic demo data |
 | `SqlAlchemyUnitOfWork` | Transaction boundary and repositories |
 | `LocalComplaintAnalyzer` | Offline deterministic classification |
 | `OpenAICompatibleComplaintAnalyzer` | Remote model classification |
+| `FallbackComplaintAnalyzer` | Local continuity during hosted failures |
 | `MockRefundGateway` | Safe simulated external action |
 
 ## 13. Extension examples
