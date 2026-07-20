@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.db.base import Base
 
@@ -81,6 +81,8 @@ class ConversationModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True
     )
+    actions: Mapped[list["ActionModel"]] = relationship(back_populates="conversation")
+    audit_events: Mapped[list["AuditEventModel"]] = relationship(back_populates="conversation")
 
 
 class ActionModel(Base):
@@ -102,6 +104,8 @@ class ActionModel(Base):
     reviewer_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    conversation: Mapped[ConversationModel | None] = relationship(back_populates="actions")
+    audit_events: Mapped[list["AuditEventModel"]] = relationship(back_populates="action")
 
 
 class AuditEventModel(Base):
@@ -118,3 +122,5 @@ class AuditEventModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True
     )
+    action: Mapped[ActionModel | None] = relationship(back_populates="audit_events")
+    conversation: Mapped[ConversationModel | None] = relationship(back_populates="audit_events")
