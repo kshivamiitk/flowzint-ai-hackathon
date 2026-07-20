@@ -27,12 +27,12 @@ class OpenAICompatibleClient:
         self._base_url = base_url.rstrip("/")
         self._model = model
         self._embedding_model = embedding_model
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
         self._client = httpx.AsyncClient(
             timeout=timeout,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
         )
 
     async def chat_json(self, system: str, user: str) -> dict:
@@ -45,11 +45,15 @@ class OpenAICompatibleClient:
             "response_format": {"type": "json_object"},
             "temperature": 0.1,
         }
-        response = await self._client.post(f"{self._base_url}/chat/completions", json=payload)
-        if response.is_error:
-            raise ExternalServiceError(f"LLM request failed: {response.text[:300]}")
-        content = response.json()["choices"][0]["message"]["content"]
-        return json.loads(content)
+        response = await self._post("/chat/completions", payload)
+        try:
+            content = response.json()["choices"][0]["message"]["content"]
+            result = json.loads(content)
+        except (KeyError, TypeError, json.JSONDecodeError) as exc:
+            raise ExternalServiceError("Chatbot API returned invalid structured output") from exc
+        if not isinstance(result, dict):
+            raise ExternalServiceError("Chatbot API returned an unexpected JSON value")
+        return result
 
     async def chat_text(self, system: str, user: str) -> str:
         payload = {
@@ -60,19 +64,34 @@ class OpenAICompatibleClient:
             ],
             "temperature": 0.2,
         }
-        response = await self._client.post(f"{self._base_url}/chat/completions", json=payload)
-        if response.is_error:
-            raise ExternalServiceError(f"LLM request failed: {response.text[:300]}")
-        return str(response.json()["choices"][0]["message"]["content"])
+        response = await self._post("/chat/completions", payload)
+        try:
+            return str(response.json()["choices"][0]["message"]["content"])
+        except (KeyError, TypeError, json.JSONDecodeError) as exc:
+            raise ExternalServiceError("Chatbot API returned an invalid response") from exc
 
     async def embed(self, text: str) -> list[float]:
-        response = await self._client.post(
-            f"{self._base_url}/embeddings",
-            json={"model": self._embedding_model, "input": text},
+        response = await self._post(
+            "/embeddings",
+            {"model": self._embedding_model, "input": text},
         )
-        if response.is_error:
-            raise ExternalServiceError(f"Embedding request failed: {response.text[:300]}")
-        return list(response.json()["data"][0]["embedding"])
+        try:
+            embedding = response.json()["data"][0]["embedding"]
+            return [float(value) for value in embedding]
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise ExternalServiceError("Embedding API returned an invalid response") from exc
+
+    async def _post(self, path: str, payload: dict) -> httpx.Response:
+        try:
+            response = await self._client.post(f"{self._base_url}{path}", json=payload)
+            response.raise_for_status()
+            return response
+        except httpx.HTTPStatusError as exc:
+            raise ExternalServiceError(
+                f"Chatbot API request failed with status {exc.response.status_code}"
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError("Chatbot API is unavailable") from exc
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -100,14 +119,21 @@ account_issue, faq, other. Allowed severity: low, medium, high, critical.
 Summary must be factual and under 30 words. Confidence must be between 0 and 1.
 """.strip()
         data = await self._client.chat_json(system, message)
-        return ComplaintAnalysis(
-            intent=Intent(data["intent"]),
-            severity=Severity(data["severity"]),
-            language=str(data.get("language", "en")),
-            summary=str(data["summary"]),
-            confidence=max(0.0, min(float(data["confidence"]), 1.0)),
-            transaction_required=bool(data["transaction_required"]),
-        )
+        try:
+            intent = Intent(data["intent"])
+            return ComplaintAnalysis(
+                intent=intent,
+                severity=Severity(data["severity"]),
+                language=str(data.get("language", "en")),
+                summary=str(data["summary"])[:180],
+                confidence=max(0.0, min(float(data["confidence"]), 1.0)),
+                transaction_required=(
+                    bool(data["transaction_required"])
+                    or intent in {Intent.FAILED_PAYMENT, Intent.REFUND_REQUEST}
+                ),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ExternalServiceError("Chatbot classification did not match the schema") from exc
 
 
 class OpenAICompatibleAnswerGenerator:

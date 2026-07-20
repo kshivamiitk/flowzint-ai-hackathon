@@ -1,69 +1,64 @@
 # Demo Script
 
-Target duration: 3 to 4 minutes.
+Target duration: 3 minutes 30 seconds.
 
-## 1. Problem — 20 seconds
+## 1. Positioning - 20 seconds
 
-“Traditional support bots answer one customer at a time. PulseResolve also
-detects when many complaints point to one operational failure, while keeping
-money movement behind deterministic rules and human approval.”
+“Most customer-care bots only generate an answer. PulseResolve verifies the
+business facts, applies deterministic policy, safely performs or protects an
+action, and detects when many customer complaints point to one incident.”
 
-## 2. Architecture — 25 seconds
+Show the Command Center and briefly point to the evidence-to-action workflow.
 
-Show `docs/LLD.md` or the README architecture diagram. Point out:
+## 2. Automatic Resolution - 60 seconds
 
-- domain rules are framework-independent;
-- AI providers are replaceable;
-- the LLM cannot authorize refunds;
-- every action is audited.
+1. Click **Reset demo**.
+2. Open **Resolution Console** and choose **Automatic resolution**.
+3. Send the prepared Hinglish message.
+4. Follow the six-stage trace: Understand, Verify, Ground, Authorize, Act,
+   Detect.
+5. Highlight the verified ₹449 transaction, policy sections, completed mock
+   refund reference, and low-risk automatic decision.
 
-## 3. Automatic resolution — 60 seconds
+Say: “The language model interpreted the customer request, but deterministic
+policy authorized the refund.”
 
-1. Open Customer Chat.
-2. Select Kumar Shivam.
-3. Send the Hinglish failed-payment message.
-4. Highlight:
-   - recognized intent and language;
-   - loaded verified transaction;
-   - policy source;
-   - ₹449 auto-refund;
-   - completed action reference.
+## 3. Incident Intelligence - 40 seconds
 
-## 4. Incident detection — 45 seconds
+Open **Incident Intelligence** and show:
 
-Open Incidents and show:
+- three affected customers;
+- shared `PAYMENT_CALLBACK_TIMEOUT` error;
+- app version and UPI evidence;
+- probable root cause and confidence.
 
-- three related complaints;
-- shared error code;
-- app version;
-- payment method;
-- probable root cause;
-- confidence.
+Click **Begin investigation**. Explain that this converts isolated support
+conversations into a system-level operations signal.
 
-Explain that the system moved from one-customer resolution to system-level
-operational intelligence.
+## 4. Human Approval - 55 seconds
 
-## 5. Human approval — 45 seconds
+1. Return to **Resolution Console** and choose **Human approval**.
+2. Send the ₹1,499 scenario.
+3. Point out medium risk and `approval required` in the trace.
+4. Open **Approval Queue**, verify the evidence note, and approve the action.
+5. Mention that the ₹3,299 scenario uses explicit high-risk escalation.
 
-1. Select Aarav Mehta.
-2. Send the failed-payment message.
-3. Open Approvals.
-4. Show the ₹1,499 action blocked by policy.
-5. Approve it and show completion.
+## 5. Audit and Close - 35 seconds
 
-## 6. Audit and safety — 30 seconds
+Open **Audit Trail**. Show classification, approval request, refund completion,
+incident detection, and the operator’s incident status change. Expand one event
+to show the recorded evidence.
 
-Open Audit Trail. Show:
+Close with:
 
-- classification;
-- approval request;
-- operator approval;
-- refund completion;
-- incident event.
+“PulseResolve combines conversational AI, verified business context, safe
+automation, human control, and cross-customer incident intelligence in one
+explainable platform.”
 
-Mention idempotency, deterministic policy limits, and the simulated gateway.
+## Recording Checklist
 
-## 7. Close — 15 seconds
-
-“PulseResolve combines grounded customer support, safe action automation, and
-cross-conversation incident intelligence in one explainable workflow.”
+- Use `http://localhost:3000`, not a source-code preview.
+- Hide bookmarks, notifications, and unrelated browser tabs.
+- Record at 1080p with browser zoom near 90–100%.
+- Keep the video between two and five minutes.
+- Upload publicly and verify the link in an incognito window.

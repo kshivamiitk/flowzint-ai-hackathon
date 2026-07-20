@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app.api.dependencies import (
     ai_components,
@@ -48,10 +49,15 @@ app.include_router(api_router, prefix=settings.api_prefix)
 
 @app.get("/health", tags=["system"])
 async def health() -> dict[str, str]:
+    async with session_factory() as session:
+        await session.execute(text("SELECT 1"))
     return {
         "status": "ok",
         "service": settings.app_name,
         "ai_provider": settings.ai_provider,
+        "database": "connected",
+        "chatbot": "local" if settings.ai_provider == "local" else "configured",
+        "demo_mode": "enabled" if settings.demo_mode else "disabled",
     }
 
 

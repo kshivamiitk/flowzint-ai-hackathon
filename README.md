@@ -1,13 +1,21 @@
 # PulseResolve AI
 
-PulseResolve is a complete hackathon-ready reference implementation of an
-**incident-aware customer-care platform**. It resolves individual support
-requests, checks deterministic refund rules, executes safe mock actions,
-routes sensitive actions to human approval, detects cross-customer incidents,
-and records an audit trail.
+PulseResolve is an **incident-aware customer resolution platform**. It moves a
+support request from conversation to verified evidence, grounded policy,
+guarded action, incident detection, and audit history in one explainable
+workflow.
 
 The repository is intentionally structured for readability. Domain rules do
 not depend on FastAPI, SQLAlchemy, HTTP clients, or a particular AI provider.
+
+![PulseResolve resolution console](docs/images/resolution-console.png)
+
+## Why it is different
+
+Most support bots stop after generating an answer. PulseResolve can safely act
+on verified business context and recognize when several individual complaints
+are symptoms of one operational failure. The LLM classifies and communicates;
+deterministic policy remains responsible for monetary authorization.
 
 ## What is included
 
@@ -16,14 +24,27 @@ not depend on FastAPI, SQLAlchemy, HTTP clients, or a particular AI provider.
 - Automatic refund for eligible transactions up to ₹500
 - Approval workflow for refunds from ₹500 to ₹2,000
 - Human-review workflow above ₹2,000
+- Six-stage explainability trace from understanding to incident detection
 - Idempotency protection against duplicate refunds
-- Similar-complaint detection and automatic incident creation
+- Hybrid incident detection using semantic similarity and shared error signals
 - Evidence-based probable root-cause summary
+- Incident investigation and resolution workflow
 - Operations dashboard, approvals page, incidents page, and audit trail
+- One-click restoration of the complete synthetic demonstration dataset
 - Deterministic local AI mode requiring no API key
-- Optional OpenAI-compatible chat-completions and embeddings adapter
+- Optional OpenAI-compatible chatbot with automatic local fallback
 - SQLite development mode and PostgreSQL Docker mode
-- Automated backend tests, frontend type checking, linting, and CI
+- Backend, evaluation, frontend, and browser workflow verification
+
+## FlowZint submission fit
+
+PulseResolve AI is positioned for the **Customer Care Bot** category. It solves
+failed-payment support workflows by combining conversational AI, verified
+transaction context, deterministic policy rules, safe refund automation, human
+approval, incident detection, and auditability.
+
+See [docs/SUBMISSION.md](docs/SUBMISSION.md) for the competition-ready problem
+statement, demo script, AI features, and final submission checklist.
 
 ## Architecture
 
@@ -38,6 +59,7 @@ Application services
   - ChatOrchestrator
   - ActionWorkflowService
   - IncidentDetectionService
+  - DemoResetService
   - QueryService
        |
        v
@@ -103,7 +125,7 @@ The local backend defaults to SQLite and creates `backend/pulseresolve.db`.
 
 ### Automatic refund and incident detection
 
-1. Open **Customer Chat**.
+1. Open **Resolution Console** and select **Automatic resolution**.
 2. Select **Kumar Shivam**.
 3. Send the pre-filled Hinglish message:
    `Bhai payment deduct ho gaya but order confirm nahi hua.`
@@ -115,19 +137,20 @@ The local backend defaults to SQLite and creates `backend/pulseresolve.db`.
    - completes a mock refund;
    - detects the third related failed-payment complaint;
    - creates an incident with shared error, app-version, and payment evidence.
-5. Open **Incidents** and **Audit Trail**.
+5. Open **Incident Intelligence**, begin investigation, and inspect the
+   human-readable **Audit Trail**.
 
 ### Human approval
 
-1. Select **Aarav Mehta**.
+1. Select **Human approval** in the Resolution Console.
 2. Send:
    `UPI charged me but the order was not created.`
 3. The ₹1,499 refund enters `awaiting_approval`.
-4. Open **Approvals**, review the evidence, and approve or reject it.
+4. Open **Approval Queue**, review the evidence, and approve or reject it.
 
 ### High-value review
 
-1. Select **Neha Singh**.
+1. Select **Protected escalation** in the Resolution Console.
 2. Send:
    `Payment ho gaya lekin booking confirm nahi hui.`
 3. The ₹3,299 request remains blocked for explicit human review.
@@ -153,24 +176,59 @@ It is ideal for demos, tests, offline development, and predictable judging.
 
 ### OpenAI-compatible mode
 
+The backend can use any provider that exposes OpenAI-compatible
+`/chat/completions`. Keep `EMBEDDING_MODEL=local` when using a free chat API
+that does not provide compatible embeddings.
+
+Groq free API key:
+
 ```env
 AI_PROVIDER=openai_compatible
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_API_KEY=your_key
-LLM_MODEL=your_chat_model
-EMBEDDING_MODEL=your_embedding_model
+CHATBOT_API_BASE_URL=https://api.groq.com/openai/v1
+CHATBOT_API_KEY=your_groq_key
+CHATBOT_MODEL=llama-3.1-8b-instant
+EMBEDDING_MODEL=local
 ```
 
-The adapter uses standard `/chat/completions` and `/embeddings` endpoints.
-Provider-specific changes remain inside `backend/app/infrastructure/ai`.
+Google Gemini API key:
+
+```env
+AI_PROVIDER=openai_compatible
+CHATBOT_API_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+CHATBOT_API_KEY=your_gemini_key
+CHATBOT_MODEL=gemini-3.5-flash
+EMBEDDING_MODEL=local
+```
+
+OpenRouter free models:
+
+```env
+AI_PROVIDER=openai_compatible
+CHATBOT_API_BASE_URL=https://openrouter.ai/api/v1
+CHATBOT_API_KEY=your_openrouter_key
+CHATBOT_MODEL=openrouter/free
+EMBEDDING_MODEL=local
+```
+
+The legacy `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL` names are also
+supported. Provider-specific changes remain inside
+`backend/app/infrastructure/ai`.
+
+Hosted chatbot failures, invalid structured responses, and free-tier rate
+limits fall back to the deterministic local analyzer and answer generator. The
+demo therefore remains usable without a paid or continuously available API.
 
 ## Configuration
 
 | Variable | Default | Purpose |
 |---|---:|---|
 | `DATABASE_URL` | SQLite URL | Async SQLAlchemy connection |
-| `CORS_ORIGINS` | `http://localhost:3000` | Allowed frontend origins |
+| `CORS_ORIGINS` | Localhost and 127.0.0.1 | Allowed frontend origins |
 | `AI_PROVIDER` | `local` | `local` or `openai_compatible` |
+| `CHATBOT_API_BASE_URL` | OpenAI URL | OpenAI-compatible `/v1` base URL |
+| `CHATBOT_API_KEY` | empty | Hosted chatbot provider key |
+| `CHATBOT_MODEL` | OpenAI model | Hosted or local chatbot model |
+| `DEMO_MODE` | `true` | Enables synthetic-data reset endpoint |
 | `AUTO_REFUND_LIMIT` | `500` | Highest automatic refund amount |
 | `APPROVAL_REFUND_LIMIT` | `2000` | Highest normal approval amount |
 | `INCIDENT_SIMILARITY_THRESHOLD` | `0.68` | Complaint similarity cutoff |
@@ -198,6 +256,7 @@ cd ../frontend
 npm run typecheck
 npm run lint
 npm run build
+npm run test:e2e  # requires the local API and web servers
 ```
 
 ## Repository map
@@ -222,18 +281,30 @@ pulseresolve-ai/
 └── Makefile
 ```
 
-## Important production work
+## Future roadmap
 
-This repository is complete for a hackathon demo, but real production use must
-add:
+PulseResolve AI is complete for a hackathon demo. The next phase is to turn the
+reference implementation into a production-ready customer-operations platform
+through the following work:
 
-- identity provider integration and role-based access control;
-- real payment-provider signatures, reconciliation, and secrets management;
-- production migrations such as Alembic instead of startup schema creation;
-- queue-backed retries and outbox/event delivery;
-- PII redaction, retention controls, and security review;
-- provider-specific structured-output validation;
-- monitoring, tracing, backups, and disaster recovery.
+- **Access control:** add identity-provider integration, role-based permissions,
+  and separate views for support agents, approvers, and operations leads.
+- **Payment integration:** replace the mock refund gateway with verified
+  payment-provider webhooks, request signatures, reconciliation jobs, and secure
+  secrets handling.
+- **Operational reliability:** move schema creation to migrations, add
+  queue-backed retries, and use an outbox pattern for refund, approval, and
+  incident events.
+- **Responsible AI controls:** add provider-specific structured-output
+  validation, prompt/version tracking, confidence thresholds, and escalation
+  rules for low-certainty responses.
+- **Privacy and compliance:** implement PII redaction, retention policies,
+  audit-log export, data-access controls, and a formal security review.
+- **Observability:** add metrics, tracing, alerting, backups, and disaster
+  recovery runbooks for production support.
+- **Product expansion:** connect real CRM/order systems, enrich incident
+  evidence with service logs, and add SLA tracking for unresolved customer
+  issues.
 
 See [docs/SECURITY.md](docs/SECURITY.md).
 

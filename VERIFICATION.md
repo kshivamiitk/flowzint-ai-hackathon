@@ -1,28 +1,23 @@
 # Verification Record
 
-Verified in the artifact-generation environment on 11 July 2026.
+Verified locally on 20 July 2026.
 
 ## Backend
 
 ```text
 ruff check app tests eval           PASS
 ruff format --check app tests eval  PASS
-pytest -q                            PASS: 10 tests
+pytest -q                            PASS: 19 tests
 python -m eval.run_evaluation        PASS: 8/8 labelled cases
 ```
 
-Covered flows include:
+Covered flows include automatic refund, approval and execution, high-value
+escalation, duplicate-refund idempotency, hosted-AI fallback, demo reset,
+structured response validation, evidence-assisted incident detection, incident
+state transitions, and audit creation.
 
-- automatic refund;
-- approval-required refund;
-- high-value escalation rule;
-- duplicate refund idempotency;
-- action state transitions;
-- incident creation;
-- API health and read endpoints.
-
-A deprecation warning is emitted by FastAPI's current test-client compatibility
-layer; it does not fail tests or affect application behavior.
+FastAPI's current test-client compatibility layer emits one deprecation warning.
+It does not fail tests or affect runtime behavior.
 
 ## Frontend
 
@@ -30,29 +25,35 @@ layer; it does not fail tests or affect application behavior.
 npm run typecheck  PASS
 npm run lint       PASS
 npm run build      PASS
+npm run test:e2e   PASS: complete browser workflow
+npm audit --omit=dev  PASS: 0 vulnerabilities
 ```
 
-The production build generated:
+The browser test resets the synthetic environment, completes the automatic
+refund, creates a protected approval, approves it, investigates the generated
+incident, verifies audit events, and checks a 390px mobile viewport for page
+overflow.
 
-- `/`
-- `/chat`
-- `/incidents`
-- `/approvals`
-- `/audit`
+The production build generated `/`, `/chat`, `/incidents`, `/approvals`, and
+`/audit`.
 
-## Configuration
+## Live Smoke Test
 
-`docker-compose.yml` was parsed successfully and contains health-gated `db`,
-`api`, and `web` services. Docker is not installed in the artifact-generation
-environment, so container image execution could not be performed here.
+The running local system was verified with the hosted OpenAI-compatible chatbot
+configuration and local fallback enabled:
 
-## Packaging
+- `/health` reported API, database, chatbot, and demo status;
+- reset restored three customers and three scenarios;
+- ₹449 completed automatically and created a three-customer incident;
+- ₹1,499 entered approval and completed after operator review;
+- ₹3,299 was labelled high risk with human escalation;
+- incident status moved from detected to investigating;
+- audit events were visible in the frontend.
 
-The ZIP excludes:
+## Security and Packaging
 
-- `node_modules`;
-- `.next`;
-- virtual environments;
-- Python caches;
-- test databases;
-- local environment files.
+- `.env` is ignored and not tracked.
+- Tracked files and current Git history were scanned for common API-key shapes.
+- Placeholder values do not resemble live provider keys.
+- `node_modules`, `.next`, virtual environments, Python caches, test results,
+  local databases, and local environment files are excluded from submission.

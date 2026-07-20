@@ -2,6 +2,7 @@ from functools import lru_cache
 
 from app.application.action_service import ActionWorkflowService
 from app.application.chat_service import ChatOrchestrator
+from app.application.demo_service import DemoResetService
 from app.application.incident_service import IncidentDetectionService
 from app.application.query_service import QueryService
 from app.application.rules import RefundPolicyEngine, RefundRuleConfig
@@ -10,6 +11,7 @@ from app.infrastructure.ai.factory import (
     AIComponents,
     build_ai_components,
 )
+from app.infrastructure.db.seed import reset_demo_database
 from app.infrastructure.db.session import (
     build_engine,
     build_session_factory,
@@ -60,9 +62,19 @@ def get_chat_service() -> ChatOrchestrator:
         embedding_provider=ai_components.embedding_provider,
         action_workflow=get_action_service(),
         incident_detector=get_incident_service(),
+        automatic_limit=settings.auto_refund_limit,
+        approval_limit=settings.approval_refund_limit,
     )
 
 
 @lru_cache
 def get_query_service() -> QueryService:
     return QueryService(uow_factory)
+
+
+@lru_cache
+def get_demo_service() -> DemoResetService:
+    async def resetter() -> None:
+        await reset_demo_database(session_factory, ai_components.embedding_provider)
+
+    return DemoResetService(resetter, enabled=settings.demo_mode)

@@ -53,6 +53,14 @@ export type ChatResponse = {
   severity: string;
   language: string;
   confidence: number;
+  decision_mode: string;
+  risk_level: string;
+  resolution_trace: Array<{
+    id: string;
+    label: string;
+    status: string;
+    detail: string;
+  }>;
   policy_references: Array<{
     title: string;
     section: string;
@@ -68,6 +76,22 @@ export type DashboardMetrics = {
   pending_approvals: number;
   completed_actions: number;
   automation_rate: number;
+};
+
+export type HealthStatus = {
+  status: string;
+  service: string;
+  ai_provider: string;
+  database: string;
+  chatbot: string;
+  demo_mode: string;
+};
+
+export type DemoReset = {
+  status: string;
+  message: string;
+  customers: number;
+  scenarios: number;
 };
 
 export type AuditEvent = {

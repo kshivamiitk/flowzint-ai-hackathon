@@ -11,5 +11,8 @@ htmlcov/
 *.sqlite3
 node_modules/
 .next/
+*.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
 out/
 .DS_Store

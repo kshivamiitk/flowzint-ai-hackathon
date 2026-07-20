@@ -4,6 +4,8 @@ import type {
   ChatResponse,
   Customer,
   DashboardMetrics,
+  DemoReset,
+  HealthStatus,
   Incident,
   Transaction,
 } from "@/lib/types";
@@ -11,19 +13,39 @@ import type {
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8000/api/v1";
+const API_ORIGIN = API_BASE.replace(/\/api\/v1\/?$/, "");
+
+function friendlyError(reason: unknown): Error {
+  if (
+    reason instanceof TypeError &&
+    reason.message.toLowerCase().includes("fetch")
+  ) {
+    return new Error(
+      "Backend API is not reachable. Start FastAPI on http://localhost:8000 and refresh this page."
+    );
+  }
+  return reason instanceof Error
+    ? reason
+    : new Error("Request failed");
+}
 
 async function request<T>(
   path: string,
   init?: RequestInit
 ): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      cache: "no-store",
+    });
+  } catch (reason) {
+    throw friendlyError(reason);
+  }
 
   if (!response.ok) {
     const payload = await response
@@ -34,7 +56,22 @@ async function request<T>(
   return response.json() as Promise<T>;
 }
 
+async function health(): Promise<HealthStatus> {
+  try {
+    const response = await fetch(`${API_ORIGIN}/health`, {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    return response.json() as Promise<HealthStatus>;
+  } catch (reason) {
+    throw friendlyError(reason);
+  }
+}
+
 export const api = {
+  health,
   customers: () => request<Customer[]>("/customers"),
   transactions: (customerId?: string) =>
     request<Transaction[]>(
@@ -58,6 +95,15 @@ export const api = {
         customer_id: customerId,
         message,
       }),
+    }),
+  resetDemo: () =>
+    request<DemoReset>("/demo/reset", {
+      method: "POST",
+    }),
+  updateIncident: (id: string, status: string) =>
+    request<Incident>(`/incidents/${id}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status }),
     }),
   approveAction: (
     id: string,

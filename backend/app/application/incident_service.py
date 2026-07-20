@@ -5,6 +5,7 @@ from math import sqrt
 
 from app.domain.entities import AuditEvent, Conversation, Incident, utc_now
 from app.domain.enums import IncidentStatus
+from app.domain.exceptions import EntityNotFoundError
 from app.domain.ports import UnitOfWork
 
 
@@ -43,7 +44,7 @@ class IncidentDetectionService:
                 item
                 for item in candidates
                 if item.analysis.intent == conversation.analysis.intent
-                and cosine_similarity(item.embedding, conversation.embedding) >= self._threshold
+                and self._matches(item, conversation)
             ]
 
             if len(similar) < self._minimum:
@@ -84,6 +85,38 @@ class IncidentDetectionService:
                         "incident_id": incident.id,
                         "related_complaints": len(similar),
                         "confidence": confidence,
+                    },
+                )
+            )
+            await uow.commit()
+            return incident
+
+    def _matches(self, candidate: Conversation, current: Conversation) -> bool:
+        candidate_error = candidate.analysis.attributes.get("error_code")
+        current_error = current.analysis.attributes.get("error_code")
+        shares_error_signal = bool(
+            candidate_error and current_error and candidate_error == current_error
+        )
+        return shares_error_signal or (
+            cosine_similarity(candidate.embedding, current.embedding) >= self._threshold
+        )
+
+    async def update_status(self, incident_id: str, status: IncidentStatus) -> Incident:
+        async with self._uow_factory() as uow:
+            incident = await uow.incidents.get(incident_id)
+            if not incident:
+                raise EntityNotFoundError("Incident not found")
+            previous = incident.status
+            incident.move_to(status)
+            await uow.incidents.update(incident)
+            await uow.audits.add(
+                AuditEvent(
+                    event_type="incident_status_changed",
+                    actor="operations_lead",
+                    details={
+                        "incident_id": incident.id,
+                        "from": previous,
+                        "to": incident.status,
                     },
                 )
             )

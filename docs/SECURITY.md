@@ -9,6 +9,8 @@
 - Human approval is required for configured monetary thresholds.
 - Prompts tell remote models to treat customer content as untrusted data.
 - Remote responses are mapped into typed domain values.
+- Invalid or unavailable hosted chatbot responses fall back to local,
+  deterministic components.
 - Environment variables hold provider credentials.
 - CORS origins are configurable.
 - Every classification, approval, rejection, refund, and incident creates an
@@ -65,4 +67,6 @@ The included gateway is simulated. A real adapter must verify:
 ## Demo disclaimer
 
 Seed customers, transactions, policies, logs, refund references, and incident
-results are synthetic. No real money is transferred.
+results are synthetic. No real money is transferred. The reset endpoint is
+available only when `DEMO_MODE=true` and must be disabled outside a synthetic
+demonstration environment.
